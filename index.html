@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ULTRAMAN Card Shop Finder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__overlay"></div>
+    <div class="hero__content">
+      <p class="eyebrow">Official Stores</p>
+      <h1>ULTRAMAN Card Shop Map</h1>
+      <p class="lede">Search official ULTRAMAN card game retailers across the United States. Filter by region or state, then jump to maps for directions.</p>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="panel">
+      <div class="panel__header">
+        <div>
+          <p class="eyebrow">Find a store</p>
+          <h2>Explore ULTRAMAN shops</h2>
+        </div>
+        <div class="status" id="status">Loading shops...</div>
+      </div>
+
+      <div class="controls">
+        <label class="field">
+          <span>Search by name, city, or address</span>
+          <input id="searchInput" type="search" placeholder="e.g. Dragon, Chicago, Broadway" aria-label="Search shops" />
+        </label>
+        <label class="field">
+          <span>Region</span>
+          <select id="regionSelect" aria-label="Filter by region">
+            <option value="all">All regions</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>State/Area</span>
+          <select id="stateSelect" aria-label="Filter by state or area">
+            <option value="all">All states</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Sort</span>
+          <select id="sortSelect" aria-label="Sort results">
+            <option value="name">Name (A -> Z)</option>
+            <option value="state">State</option>
+            <option value="region">Region</option>
+            <option value="recent">Newest listed</option>
+          </select>
+        </label>
+        <button class="button" id="resetBtn" type="button">Reset filters</button>
+      </div>
+
+      <div class="stats" id="stats"></div>
+      <div class="list" id="shopList" role="list"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 901 ULTRA League. All rights reserved.</p>
+  </footer>
+
+  <template id="shopTemplate">
+    <article class="card" role="listitem">
+      <div class="card__header">
+        <div>
+          <p class="eyebrow region">America</p>
+          <h3 class="name">Store name</h3>
+          <p class="state">State</p>
+        </div>
+        <span class="pill" data-state="">State</span>
+      </div>
+      <p class="address">Address</p>
+      <div class="card__meta">
+        <span class="phone">Phone</span>
+      </div>
+      <div class="card__actions">
+        <a class="button button--ghost map-link" target="_blank" rel="noopener" href="#">Open map</a>
+        <button class="button button--secondary copy-btn" type="button">Copy address</button>
+      </div>
+    </article>
+  </template>
+
+  <div class="toast" id="toast" role="status" aria-live="polite">Copied!</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
