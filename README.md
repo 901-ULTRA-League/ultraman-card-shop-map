@@ -1,0 +1,1 @@
+# ultraman-card-shop-map
