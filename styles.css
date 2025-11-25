@@ -56,6 +56,14 @@ a { color: inherit; }
 
 .page { max-width: 1100px; margin: -48px auto 64px; padding: 0 20px; }
 
+.map-panel { margin-bottom: 16px; }
+.map {
+  height: 420px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
 .footer {
   max-width: 1100px;
   margin: 0 auto 48px;

@@ -1,5 +1,6 @@
 (() => {
   const API_URL = 'https://api.ultraman-cardgame.com/api/v1/us/shops';
+  const API_PROXY = `https://corsproxy.io/?${encodeURIComponent(API_URL)}`;
 
   const els = {
     status: document.getElementById('status'),
@@ -17,11 +18,35 @@
   const state = {
     shops: [],
     filtered: [],
+    map: null,
+    mapMarkers: null,
   };
 
   function setStatus(message, type = 'info') {
     els.status.textContent = message;
     els.status.style.color = type === 'error' ? '#ff9b9b' : '#a0a7b8';
+  }
+
+  async function fetchWithFallback() {
+    const sources = [
+      { url: API_URL, label: 'direct' },
+      { url: API_PROXY, label: 'proxy' },
+    ];
+
+    let lastError;
+    for (const source of sources) {
+      try {
+        const res = await fetch(source.url, { mode: 'cors', cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setStatus(`Loaded shops (${source.label})`);
+        return json;
+      } catch (err) {
+        lastError = err;
+        console.warn(`Shop fetch failed via ${source.label}`, err);
+      }
+    }
+    throw lastError || new Error('Could not load shops');
   }
 
   function normalize(shop) {
@@ -34,6 +59,81 @@
       mapUrl: shop.map_url || '',
       phone: shop.telephone_number || '',
     };
+  }
+
+  const stateCoords = {
+    Connecticut: [41.6, -72.7],
+    Florida: [27.7, -81.5],
+    Indiana: [39.8, -86.1],
+    Michigan: [43, -84.5],
+    'New Jersey': [40.1, -74.7],
+    'New York': [42.9, -75.5],
+    Ohio: [40.3, -82.7],
+    Pennsylvania: [41, -77.8],
+    'Rhode Island': [41.7, -71.5],
+    Virginia: [37.7, -78.5],
+    Arkansas: [34.8, -92.2],
+    Illinois: [40, -89],
+    'Kentucky (West)': [37.7, -87.1],
+    Minnesota: [46.1, -94.3],
+    Mississippi: [33, -89.9],
+    Missouri: [38.5, -92.6],
+    Texas: [31.5, -99.8],
+    Wisconsin: [44.5, -89.5],
+    Arizona: [34.2, -111.7],
+    Idaho: [44.1, -114.5],
+    'South Dakota (West)': [44.4, -103.8],
+    Utah: [39.4, -111.5],
+    California: [36.8, -119.4],
+    Nevada: [39.3, -116.6],
+    Oregon: [43.9, -120.6],
+    Washington: [47.4, -121.8],
+    Alaska: [64.2, -150],
+  };
+
+  const regionCoords = {
+    'America-Eastern': [40.3, -77],
+    'America-Central': [38, -95],
+    'America-Mountain': [39, -111],
+    'America-Pacific': [37, -120],
+    'America-Alaska': [64.2, -150],
+  };
+
+  function getCoords(shop) {
+    return stateCoords[shop.state] || regionCoords[shop.region] || [39.5, -98.35];
+  }
+
+  function ensureMap() {
+    if (typeof L === 'undefined') return null;
+    if (!state.map) {
+      state.map = L.map('map', { zoomControl: true, attributionControl: false }).setView([39.5, -98.35], 4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(state.map);
+      state.mapMarkers = L.featureGroup().addTo(state.map);
+    }
+    return state.map;
+  }
+
+  function setMapMarkers(list) {
+    const map = ensureMap();
+    if (!map || !state.mapMarkers) return;
+
+    state.mapMarkers.clearLayers();
+
+    list.forEach((shop) => {
+      const coords = getCoords(shop);
+      const popup = `<strong>${shop.name}</strong><br>${shop.address}<br>${shop.state}<br>` +
+        (shop.mapUrl ? `<a href="${shop.mapUrl}" target="_blank" rel="noopener">Open map</a>` : '');
+      const marker = L.marker(coords).bindPopup(popup);
+      state.mapMarkers.addLayer(marker);
+    });
+
+    if (state.mapMarkers.getLayers().length) {
+      map.fitBounds(state.mapMarkers.getBounds().pad(0.4));
+    } else {
+      map.setView([39.5, -98.35], 4);
+    }
   }
 
   function renderFilters() {
@@ -171,15 +271,14 @@
     state.filtered = list;
     renderStats(list);
     renderList(list);
+    setMapMarkers(list);
     setStatus(`${list.length} shops shown`);
   }
 
   async function loadShops() {
     setStatus('Loading shops...');
     try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-      const payload = await res.json();
+      const payload = await fetchWithFallback();
       const list = Array.isArray(payload?.data?.shopList) ? payload.data.shopList : [];
 
       state.shops = list.map(normalize);
